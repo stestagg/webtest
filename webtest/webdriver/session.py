@@ -6,6 +6,8 @@ import requests
 
 import webtest.webdriver.window
 import webtest.webdriver.cookies
+import webtest.webdriver.element
+import webtest.webdriver.finder
 
 
 def setter(func):
@@ -27,48 +29,25 @@ def simple_get(name):
 
 
 def json_default(obj):
-    print "!!!!", obj
+    if hasattr(obj, "element_id"):
+        return {"ELEMENT": obj.element_id}
     raise TypeError()
 
 
-
-FIND_USING_MAP = {
-    "class": "class name",
-    "css": "css selector",
-}
-
-
-def named_finder(name):
-    def finder(self, value):
-        return self._find(name, value)
-    finder.__name__ = "by_" + name
-    return finder
-
-
-class ElementFinder(object):
-
-    def _find(self, using, value):
-        self._send("POST", "element", using=using, value=value)
-
-for name in ["css", "class", "id", "name", "tag", "xpath"]:
-    setattr(ElementFinder, "by_" + name, named_finder(name)
-
-
-
-class Session(object):
+class Session(webtest.webdriver.finder.ElementFinder):
 
     def __init__(self, driver, session_id):
         self.driver = driver
         self.session_id = session_id
         try:
-            self.implicit_timeout = 5 # Set the implicit timeout low because of built-in retry
+            self.implicit_timeout = 5  # Set the implicit timeout low because of built-in retry
         except:
             pass
 
     # Webdriver protocol implementation and helpers
     def _send(self, method, *path, **data):
         url = "%s/%s" % (self.driver.base_address,
-                          "/".join(("session", self.session_id) + path))
+                         "/".join(("session", self.session_id) + path))
         headers = {}
         if method == "GET":
             assert len(data) == 0
@@ -81,6 +60,14 @@ class Session(object):
         assert response["sessionId"] == self.session_id
         assert response["status"] == 0, response
         return response.get("value")
+
+    @property
+    def element_desc(self):
+        return ""
+
+    @property
+    def session(self):
+        return self
 
     def stop(self):
         self._send("DELETE")
@@ -132,7 +119,7 @@ class Session(object):
 
     def execute_js(self, js, args=(), async=False):
         method = "execute_async" if async else "execute"
-        return self._send("POST", method, script=js, args=args)
+        return self._convert_elements(self._send("POST", method, script=js, args=args))
 
     def screenshot(self, save_to_file=None):
         screenshot = self._send("GET", "screenshot")

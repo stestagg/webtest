@@ -1,4 +1,4 @@
-import copy
+1import copy
 import contextlib
 import requests
 import json
@@ -81,5 +81,5 @@ class Driver(object):
         response = requests.post(self.base_address + "/session", data=data, headers=headers)
         # TODO: error handling (and error strategies)
         data = response.json()
-        assert data["status"] == 0
+        assert data["status"] == 0, data
         return webtest.webdriver.session.Session(self, data["sessionId"])

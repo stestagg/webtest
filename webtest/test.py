@@ -1,9 +1,11 @@
-import webtest.webdriver.drivers.remote as remote
+import webtest.webdriver.drivers.phantom as phantom
 
-dd = remote.Driver(port=9515)
+dd = phantom.Driver(port=9515)
+
 
 with dd.session() as session:
     session.url = "http://www.google.com"
-    #session.execute_js("alert('hi')")
-    print list(session.cookies)
-    print session.cookies["PREF"]
+    print  session.by_id("gs_id0").by_id("gs_tti0").by_id("gbqfq")
+    tds = session.by_tag("td", all=True)
+    print session.execute_js("return arguments[0];", tds)
+    import time; time.sleep(10)
